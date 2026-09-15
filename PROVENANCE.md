@@ -1,34 +1,34 @@
 # Provenance and public boundary
 
-- Source project: Veritas
-- Source repository identifier: `project-0010-Veritas`
-- Source branch: `veritas-product`
-- Source commit: `cbed7158c8ecd42749026076213b29817a6c54c1`
-- Source parent: `f8f7c309f82a9741ddf1096519d0267068911d20`
-- Snapshot date: 2026-09-15
-- Source state: clean, matching the approved PC-01 baseline at extraction.
-- Public history: new root history; the original Git directory is not included.
+- Derived from the author's private Veritas project.
+- Snapshot version: V1.1 public snapshot.
+- Snapshot date: 2026-09-15.
+- Included scope: the selected deterministic verifier, explicit run state,
+  evidence contracts, bounded subprocess helper, syntactic command normalization,
+  synthetic demo wiring and public regression tests.
+- Excluded scope: original private Git history, operational artifacts, runtime or
+  bakeoff data, provider responses, databases, traces, private prompts and
+  unrelated product modules.
+- Public history: a new public root; no original private Git history is included.
 
-The source project had a separately closed desktop repair milestone. Its desktop
-test results are not public-snapshot results. This artifact does not include
-desktop code.
+Desktop code and associated tests are outside this public scope.
 
 ## Included source and transformations
 
-| Path | Source SHA-256 | Transformation |
-| --- | --- | --- |
-| `src/veritas/contracts.py` | `a3262fc6a48de780369ceb1e6f29ed271c1cbe00b0a662ffa9d74244afd894be` | Whole declarations required by TaskSpec, observations, evidence, reports and RunState retained; provider/actor/termination/result declarations and unused imports excluded. No retained method body rewritten. |
-| `src/veritas/state.py` | `7ff99481decb0d5a6305cf58b10620b658f0eeda1a16f853cb1d79d2165edb39` | Unchanged source, LF line endings. |
-| `src/veritas/verifier.py` | `ccb2bf2d5ea9690463bf83f2121e15ede733a6986019a44f668ddca0ee8dc451` | Unchanged source, LF line endings. |
-| `src/veritas/subprocess_util.py` | `1c467efd3a4f0eeca9ea6e9b2b615c5ce4ae4392b0a70874b993591bc0b8fdf9` | Unchanged source, LF line endings. |
-| `src/veritas/verification_debt.py` | `90f217d86728033627cb0d70621b97d7b81b9a7a8b38d97d1846a936bb86bf47` | Only normalize_argv and its pathlib import retained; no convergence prompts, telemetry or controller. |
-| `tests/test_state.py` | `009d7c579552c5beabcffa633355a5bd1c45f54fc82f8d650e39b1d285fac8e7` | Unchanged source, LF line endings. |
+| Public path | Public snapshot treatment |
+| --- | --- |
+| `src/veritas/contracts.py` | Retains the declarations required by TaskSpec, observations, evidence, reports and RunState; unrelated product declarations are excluded. |
+| `src/veritas/state.py` | Retains explicit RunState transitions; V1.1 makes PAUSED terminal for the current run record. |
+| `src/veritas/verifier.py` | Retains the deterministic verification gates; V1.1 rejects any parent-traversal path segment and labels the destructive check as a pattern gate. |
+| `src/veritas/subprocess_util.py` | Retains the bounded subprocess helper used by applicable checks. |
+| `src/veritas/verification_debt.py` | Retains only command identity normalization; V1.1 uses a controlled Python interpreter basename pattern, not substring matching. |
+| `tests/test_state.py` | Retains the two extracted state tests and adds the V1.1 PAUSED terminal regression. |
+| `tests/test_public_core.py` | Synthetic public completion tests plus V1.1 command-identity and path-integrity regressions. |
 
-The hashes describe original source bytes, before extraction. Retained class and
-function definitions were checked for AST equality with the source. The complete
-verifier is retained: removing individual gates would change the research
-mechanism. Only dependency declarations were reduced in `contracts.py`, and only
-`normalize_argv` remains from the convergence module.
+The public modules retain the selected verifier mechanism and contract vocabulary;
+the snapshot intentionally omits private history and operational metadata. The
+V1.1 changes are limited to verifier/state boundary hardening and dependency
+hygiene.
 
 ## Dependency map
 
@@ -37,7 +37,7 @@ demo -> contracts, state, verifier + Python standard library
 state -> contracts + pydantic
 verifier -> contracts, state, normalize_argv, subprocess_util + standard library
 contracts -> pydantic + standard library
-normalize_argv -> pathlib
+normalize_argv -> re + standard library
 subprocess_util -> subprocess, typing
 tests -> installed public package + standard library unittest
 ```
@@ -48,9 +48,9 @@ is needed.
 
 ## Example wiring and execution scope
 
-`src/veritas/demo.py` is new example wiring, not an extraction of the complete
-AgentRunner. It mirrors the source runner's report/conclusion/PASS-only-finish
-sequence, delegating the decision to the original verifier and state class.
+`src/veritas/demo.py` is example wiring, not a complete agent runner. It mirrors
+the intended report/conclusion/PASS-only-finish sequence, delegating the decision
+to the deterministic verifier and state class.
 
 The scripted executor uses standard-library writes on two known synthetic files
 in its own temporary directory. Observations use the existing contract vocabulary;
@@ -66,14 +66,13 @@ criteria or state.
 
 ## Design philosophy
 
-The source's frozen `VERITAS_PHILOSOPHY.md` informed the owner's requested public
-principles: Restraint, Minimal Change, Evidence Before Confidence, Independent
-Verification and Provable Completion.
+The public principles are Restraint, Minimal Change, Evidence Before Confidence,
+Independent Verification and Provable Completion.
 
 The README maps each principle to the actual module boundary, fixture behavior
-or tests. The full philosophy document and eight-metric quality dashboard are
-not distributed or presented as implemented evaluation. The core public statement
-is: “Completion must be demonstrated by evidence, not declared by the agent itself.”
+or tests. Broader quality benchmarks are not distributed or presented as
+implemented evaluation. The core public statement is: “Completion must be
+demonstrated by evidence, not declared by the agent itself.”
 
 ## Data classification
 
@@ -91,8 +90,9 @@ example/test and removed afterwards.
 
 ## Test provenance
 
-- Two state tests are retained unchanged.
-- Sixteen focused public tests were newly authored for this extraction.
+- Two state tests are retained from the public extraction baseline; one state
+  regression and five verifier-boundary regressions were added for V1.1.
+- Twenty-one focused public tests are now included in the snapshot.
 - No original broad suite, desktop E2E suite, benchmark corpus or schema-evaluation
   result is used as the snapshot's test count.
 - Snapshot tests were run against a non-editable installed package in a fresh
@@ -126,3 +126,8 @@ verification checks, evidence linkage, and refusal to complete the synthetic
 negative cases. No production reliability, general semantic correctness,
 full memory/RAG, real-provider success rate or embodied experiment is claimed.
 Logical module independence is not process isolation or evidence authenticity.
+Command identity normalization is syntactic, not executable attestation. Path
+checks validate observed strings against declared boundaries, not symlink-aware
+filesystem confinement. The Destructive Pattern Gate is heuristic and
+pattern-based, not complete tool confinement; actual permission and confinement
+belong to the ToolRuntime or caller boundary.

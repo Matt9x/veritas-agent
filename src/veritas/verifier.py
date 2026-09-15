@@ -50,7 +50,7 @@ GATE_ORDER = (
     "Evidence Gate",
     "Intent Assertion Gate",
     "Regression Gate",
-    "Security/Destructive Gate",
+    "Destructive Pattern Gate",
     "Final Goal Gate",
 )
 
@@ -579,7 +579,7 @@ class RuleVerifier:
         # --- Regression Gate ---
         self._regression_gate(add, blocking, spec, test_observations, changed_files)
 
-        # --- Security/Destructive Gate ---
+        # --- Destructive Pattern Gate ---
         self._security_gate(add, blocking, observations, changed_files, spec)
 
         # --- Final Goal Gate ---
@@ -884,13 +884,13 @@ class RuleVerifier:
             if reason:
                 violations.append(f"file:{path} ({reason})")
         if not commands and not changed_files:
-            add("Security/Destructive Gate", GATE_NOT_APPLICABLE, "no command or file change to inspect")
+            add("Destructive Pattern Gate", GATE_NOT_APPLICABLE, "no command or file change to inspect")
             return
         if violations:
-            add("Security/Destructive Gate", GATE_FAIL, "destructive command or unauthorized path detected", violations)
+            add("Destructive Pattern Gate", GATE_FAIL, "destructive pattern or unauthorized path detected", violations)
             blocking.extend(violations)
         else:
-            add("Security/Destructive Gate", GATE_PASS, f"inspected {len(commands)} command(s) and {len(changed_files)} changed file(s), no destructive pattern", changed_files)
+            add("Destructive Pattern Gate", GATE_PASS, f"inspected {len(commands)} command(s) and {len(changed_files)} changed file(s), no destructive pattern", changed_files)
 
     @staticmethod
     def _destructive_reason(argv: list[str]) -> str | None:
@@ -910,7 +910,9 @@ class RuleVerifier:
     @staticmethod
     def _unsafe_path_reason(path: str, allowed_paths: list[str]) -> str | None:
         normalized = path.replace("\\", "/")
-        if normalized.startswith("/") or normalized.startswith("../") or (len(normalized) > 1 and normalized[1] == ":"):
+        if ".." in normalized.split("/"):
+            return "path contains parent traversal segment"
+        if normalized.startswith("/") or (len(normalized) > 1 and normalized[1] == ":"):
             return "path escapes the repository root"
         if any(part == ".git" for part in normalized.split("/")[:-1]) or normalized.startswith(".git/"):
             return "change touches git internals"

@@ -19,6 +19,17 @@ class StateTests(unittest.TestCase):
         state.finish()
         self.assertEqual(state.phase, Phase.DONE)
 
+    def test_paused_run_is_terminal_for_this_record(self):
+        state = RunState(run_id="run-3", task_id="task-3")
+        state.start()
+        state.pause()
+
+        for transition in (state.block, state.finish, state.start, state.begin_verification):
+            with self.subTest(transition=transition.__name__):
+                with self.assertRaises(StateTransitionError):
+                    transition()
+                self.assertEqual(state.phase, Phase.PAUSED)
+
 
 if __name__ == "__main__":
     unittest.main()

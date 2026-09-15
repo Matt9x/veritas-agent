@@ -15,7 +15,7 @@ Dependencies are installed separately and retain their licenses:
 | annotated-types | 0.7.0 | MIT (distribution classifier and bundled license) |
 | typing-extensions | 4.15.0 | PSF-2.0 |
 | typing-inspection | 0.4.2 | MIT |
-| setuptools (build tool) | 81.0.0 | MIT |
+| setuptools (build tool) | 83.0.0 | MIT |
 
 Metadata was checked in a fresh installation from the Python Package Index.
 Consult each installed distribution's license files for its full terms. The

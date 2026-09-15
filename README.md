@@ -8,7 +8,7 @@ Verification-First Agent Harness
 - **Idea:** separate task execution, observed evidence and the completion decision.
 - **Artifact:** a small headless research subset of the original Veritas verifier
   and state model, with a scripted offline executor.
-- **Evidence:** 18 focused tests pass; five synthetic demo scenarios show one
+- **Evidence:** 24 public tests pass; five synthetic demo scenarios show one
   verified completion and four refusals to mark complete.
 
 ## Design Philosophy
@@ -91,8 +91,10 @@ links in memory, and the demo prints a public-safe summary to the terminal.
 The demo exercises `CREATED`, `RUNNING`, `VERIFYING`, `DONE` and `BLOCKED`.
 `finish()` rejects both an incorrect phase and every non-`PASS` verdict, including
 `PASS_WITH_WARNINGS`. The retained source enum also includes waiting, stopped and
-paused states; this snapshot does not implement their orchestration or resume
-persistence. There is no automatic repair loop in the demo.
+paused states; `PAUSED` is terminal for the current run record, and a future
+resume would be a new run seeded from persisted state. This snapshot does not
+implement pause orchestration or resume persistence. There is no automatic repair
+loop in the demo.
 
 ## Verification Model
 
@@ -101,6 +103,10 @@ checks criterion/evidence linkage and can inspect artifact syntax, structural
 intent, changed-path reports, declared command observations and evidence digests.
 The synthetic task requires exact integer constants in a small text artifact;
 the verifier parses and reads those constants itself.
+
+Declared command identity normalization removes only a leading basename matching
+a controlled Python interpreter pattern. It is syntactic normalization, not
+cryptographic or runtime executable attestation.
 
 It is **logically independent**, but shares a process and trusted inputs with the
 harness. It is not a sandbox, an independent organization, a formal proof system,
@@ -113,6 +119,12 @@ not mean every possible check ran. The demo changes text artifacts, so Python
 lint/typecheck gates are not applicable and no external checker is launched.
 When using the retained verifier on changed Python files, installed checkers may
 be discovered and invoked; that broader behavior is not part of the demo claim.
+
+The `Destructive Pattern Gate` is a heuristic, pattern-based check over observed
+top-level argv and declared changed-path strings. It is not a shell parser,
+complete destructive-action prevention mechanism or security sandbox. Actual
+permission and filesystem confinement belong to the ToolRuntime or caller
+boundary.
 
 ## Evidence Model
 
@@ -177,16 +189,18 @@ account, Git executable, GUI, Docker or database service. No source-repository
 ## Tests
 
 On 2026-09-15, a fresh environment installed this snapshot from a separate copy:
-**18 passed, 0 failed, 0 skipped**. These are 2 retained state tests and 16 focused
-snapshot tests, including the deterministic demo regression.
+**24 passed, 0 failed, 0 skipped**. These are 3 state tests (2 retained and 1
+V1.1 regression) and 21 focused snapshot tests, including the deterministic demo
+regression and verifier-boundary regressions.
 
-Tests cover phase/verification guards, positive completion, false claims, wrong
-and partial execution, missing/stale/foreign evidence, observation linkage,
-post-capture drift, out-of-scope changes, missing semantic anchors, all non-PASS
-verdicts, repeatable demo output and the installed module boundary.
+Tests cover phase/verification guards, PAUSED terminal semantics, positive
+completion, false claims, wrong and partial execution, missing/stale/foreign
+evidence, observation linkage, post-capture drift, out-of-scope changes, missing
+semantic anchors, exact command identity matching, parent-traversal rejection,
+all non-PASS verdicts, repeatable demo output and the installed module boundary.
 
-The original project's desktop tests, broad suites and manifest/schema checks are
-not results for this artifact. No agent task success rate or SOTA result is claimed.
+Broader desktop, manifest and schema checks are not results for this artifact. No
+agent task success rate or SOTA result is claimed.
 Python syntax/import checks also pass. Lint/typecheck tools are not dependencies
 of this minimal snapshot.
 
@@ -198,8 +212,13 @@ of this minimal snapshot.
 - Logical verifier independence does not protect against forged state/evidence,
   arbitrary Python execution, race conditions or incomplete observation capture.
 - Optional unavailable checkers are disclosed, not automatically blocking.
-- No complete proof of tool confinement, destructive-action prevention, arbitrary
-  semantic correctness, protected-file integrity or all original verifier branches.
+- Path constraints are string/declared-boundary checks; they do not resolve
+  symlinks or provide filesystem sandboxing. Actual confinement belongs to the
+  ToolRuntime or caller boundary.
+- The Destructive Pattern Gate is heuristic and pattern-based; it is not complete
+  destructive-action prevention, shell-payload parsing or tool confinement.
+- No complete proof of arbitrary semantic correctness, protected-file integrity or
+  all original verifier branches.
 - No production ToolRuntime, permission-system demo, durable trace store, repair
   controller or long-horizon recovery validation.
 - No MemoryGraph, RetrievalPolicy, memory writer, RAG or GUI.
@@ -225,12 +244,12 @@ implement or evaluate an embodied agent.
 
 ## Provenance
 
-Source project: **Veritas**. Source branch: `veritas-product`. Source commit:
-`cbed7158c8ecd42749026076213b29817a6c54c1`. Snapshot date: **2026-09-15**.
+Derived from the author's private **Veritas** project. Snapshot version: **V1.1**.
+Snapshot date: **2026-09-15**.
 
-See [PROVENANCE.md](PROVENANCE.md) for extraction changes, source hashes, dependency
-mapping, ownership and data classification. Original Git history and operational
-artifacts are not included.
+See [PROVENANCE.md](PROVENANCE.md) for the included/excluded scope, public
+transformations, ownership and data classification. No original private Git
+history or operational artifacts are included.
 
 ## License
 

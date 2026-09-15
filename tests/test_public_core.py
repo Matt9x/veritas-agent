@@ -9,10 +9,11 @@ from pathlib import Path
 import veritas
 from veritas.contracts import (
     Criterion, EvidenceRecord, IntentAssertion, Observation, ObservationStatus,
-    TaskSpec, VerificationConclusion,
+    TaskSpec, VerificationCheck, VerificationConclusion,
 )
 from veritas.demo import SCENARIOS, completion_attempt, run_scenario
 from veritas.state import Phase, RunState, StateTransitionError
+from veritas.verification_debt import normalize_argv
 from veritas.verifier import RuleVerifier
 
 
@@ -146,6 +147,38 @@ class PublicCompletionTests(unittest.TestCase):
             for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
                 if isinstance(node, ast.ImportFrom):
                     self.assertFalse(set((node.module or "").split(".")) & forbidden)
+
+
+class VerifierBoundaryTests(unittest.TestCase):
+    def test_normalize_argv_strips_supported_python_interpreter_names(self):
+        command = ("-m", "pytest", "-q")
+        for executable in ("python", "python.exe", "python3", "python3.14", r"D:\Python\python3.14.exe"):
+            with self.subTest(executable=executable):
+                self.assertEqual(normalize_argv([executable, *command]), command)
+
+    def test_normalize_argv_keeps_substring_python_names(self):
+        command = ("-m", "pytest", "-q")
+        for executable in ("evilpython.exe", "notpython", "python-wrapper.exe"):
+            with self.subTest(executable=executable):
+                self.assertEqual(normalize_argv([executable, *command]), (executable, *command))
+
+    def test_command_identity_does_not_accept_fake_python_interpreter(self):
+        check = VerificationCheck(check_id="tests", criterion_ids=["C1"], argv=["python", "-m", "pytest"])
+        observation = Observation(
+            invocation_id="run-1",
+            tool="run_tests",
+            status=ObservationStatus.SUCCEEDED,
+            data={"argv": ["evilpython.exe", "-m", "pytest"]},
+        )
+        self.assertFalse(RuleVerifier._observation_ran_check(check, observation))
+
+    def test_parent_traversal_segments_are_rejected_even_when_pattern_allows(self):
+        for path in ("../x", "allowed/../../outside.txt", "safe/../outside.txt", r"safe\..\outside.txt"):
+            with self.subTest(path=path):
+                self.assertIsNotNone(RuleVerifier._unsafe_path_reason(path, ["*"]))
+
+    def test_valid_allowed_path_remains_allowed(self):
+        self.assertIsNone(RuleVerifier._unsafe_path_reason("allowed/file.txt", ["allowed/**"]))
 
 
 if __name__ == "__main__":

@@ -79,7 +79,7 @@ class RunState(StrictModel):
         self.state_version += 1
 
     def block(self) -> None:
-        if self.phase in (Phase.DONE, Phase.BLOCKED, Phase.STOPPED):
+        if self.phase in (Phase.DONE, Phase.BLOCKED, Phase.STOPPED, Phase.PAUSED):
             raise StateTransitionError(f"cannot block from {self.phase}")
         self.phase = Phase.BLOCKED
         self.state_version += 1
